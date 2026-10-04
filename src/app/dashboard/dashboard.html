@@ -45,7 +45,8 @@
         <button class="room" [class]="'room s-' + room.status"
           [attr.aria-label]="'Room ' + room.no + ', ' + label(room.status)" (click)="cycle(item.index, room)">
           <b>{{ room.no }}</b>
-          <span>{{ label(room.status) }}</span>
+          <span>{{ label(room.status) }}</span><br>
+          <span>{{room.remark}}</span>
         </button>
         }
       </div>

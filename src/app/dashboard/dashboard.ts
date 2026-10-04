@@ -3,7 +3,7 @@ import { TeePeeServices } from '../services/tee-pee-services';
 import { NewProperty, Popup } from '../popup/popup';
 
 type Status = 'vacant' | 'occupied' | 'reserved' | 'maintenance';
-interface Room { no: number; status: Status; }
+interface Room { no: number; status: Status;remark:string }
 interface Building { name: string; rooms: Room[]; }
 type Counts = Record<Status, number>;
 
@@ -22,10 +22,10 @@ const apiResponse = [
         id: 1,
         name: 'Manjeri',
         rooms: [
-          { id: 2, no: 16, status: 'vacant' },
-          { id: 3, no: 17, status: 'occupied' },
-          { id: 2, no: 16, status: 'reserved' },
-          { id: 3, no: 17, status: 'maintenance' },
+          { id: 2, no: 16, remark:'remark',status: 'vacant' },
+          { id: 3, no: 17, remark:'remark',status: 'occupied' },
+          { id: 2, no: 16, remark:'remark',status: 'reserved' },
+          { id: 3, no: 17, remark:'remark',status: 'maintenance' },
         ],
       },
     ],
@@ -35,7 +35,7 @@ const apiResponse = [
 function sampleData(): Building[] {
   return apiResponse[0].name.map(place => ({
     name: place.name,
-    rooms: place.rooms.map(r => ({ no: r.no, status: r.status as Status })),
+    rooms: place.rooms.map(r => ({ no: r.no, remark: r.remark,status:r.status as Status })),
   }));
 }
 
@@ -103,6 +103,8 @@ export class Dashboard {
   }
 
   onPopupSave(newProperty: NewProperty) {
+    console.log(newProperty);
+    
     if (newProperty.editIndex !== undefined) {
       // Editing an existing building: replace it in place.
       this.buildings.update(current =>
@@ -111,6 +113,7 @@ export class Dashboard {
             name: newProperty.name,
             rooms: newProperty.rooms.map(r => ({
               no: r.room,
+              remark:r.remark,
               status: r.status as Status,
             })),
           }
@@ -122,7 +125,7 @@ export class Dashboard {
         ...current,
         {
           name: newProperty.name,
-          rooms: newProperty.rooms.map(r => ({ no: r.room, status: r.status as Status })),
+          rooms: newProperty.rooms.map(r => ({ no: r.room, remark:r.remark,status: r.status as Status })),
         },
       ]);
     }

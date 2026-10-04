@@ -13,7 +13,7 @@
 @media (prefers-color-scheme: dark) {
   :host {
     --bg: #0e1620; --card: #172230; --text: #e6edf5; --muted: #93a3b5; --line: #26364a;
-    --vacant: #4cd4a0;      --vacant-bg: #123a2d;
+    --vacant:  #123a2d;      --vacant-bg: #123a2d;
     --occupied: #7ea6ff;    --occupied-bg: #172b58;
     --reserved: #c39bf2;    --reserved-bg: #33214f;
     --maintenance: #f2b366; --maintenance-bg: #48300f;
