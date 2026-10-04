@@ -1,0 +1,183 @@
+import { Component, computed, signal, viewChild } from '@angular/core';
+import { TeePeeServices } from '../services/tee-pee-services';
+import { NewProperty, Popup } from '../popup/popup';
+
+type Status = 'vacant' | 'occupied' | 'reserved' | 'maintenance';
+interface Room { no: number; status: Status; }
+interface Building { name: string; rooms: Room[]; }
+type Counts = Record<Status, number>;
+
+const STATUSES: { key: Status; label: string }[] = [
+  { key: 'vacant', label: 'Vacant' },
+  { key: 'occupied', label: 'Occupied' },
+  { key: 'reserved', label: 'Reserved' },
+  { key: 'maintenance', label: 'Maintenance' },
+];
+
+// Fallback data shown before the API responds.
+const apiResponse = [
+  {
+    name: [
+      {
+        id: 1,
+        name: 'Manjeri',
+        rooms: [
+          { id: 2, no: 16, status: 'vacant' },
+          { id: 3, no: 17, status: 'occupied' },
+          { id: 2, no: 16, status: 'reserved' },
+          { id: 3, no: 17, status: 'maintenance' },
+        ],
+      },
+    ],
+  },
+];
+
+function sampleData(): Building[] {
+  return apiResponse[0].name.map(place => ({
+    name: place.name,
+    rooms: place.rooms.map(r => ({ no: r.no, status: r.status as Status })),
+  }));
+}
+
+@Component({
+  selector: 'app-dashboard',
+  imports: [Popup],
+  standalone: true,
+  templateUrl: './dashboard.html',
+  styleUrl: './dashboard.css',
+})
+export class Dashboard {
+  constructor(private propertyService: TeePeeServices) { }
+
+  // Reference to the <app-popup> in the template, so we can call its methods directly.
+  popupRef = viewChild(Popup);
+
+  ngOnInit() {
+    this.propertyService.getProduct().subscribe((data) => {
+      this.buildings.set(data[0].name);
+    });
+  }
+
+  readonly statuses = STATUSES;
+  btn = signal('btn btn-secondary');
+  btnEdit = signal('btn btn-primary');
+  saveMessage = signal('');
+  saveStatus = signal<'success' | 'error' | ''>('');
+  buildings = signal<Building[]>(sampleData());
+  selected = signal(-1); // -1 = all buildings
+
+  private countOf(rooms: Room[]): Counts {
+    const c: Counts = { vacant: 0, occupied: 0, reserved: 0, maintenance: 0 };
+    rooms.forEach(r => c[r.status]++);
+    return c;
+  }
+
+  visibleBuildings = computed(() =>
+    this.buildings()
+      .map((building, index) => ({ building, index, counts: this.countOf(building.rooms) }))
+      .filter(({ index }) => this.selected() < 0 || index === this.selected())
+  );
+
+  pct(count: number, total: number): number {
+    return total ? (count / total) * 100 : 0;
+  }
+
+  label(s: Status): string {
+    return STATUSES.find(x => x.key === s)!.label;
+  }
+
+  // Click a room to cycle its status.
+  cycle(buildingIndex: number, room: Room) {
+    this.btn.set('btn btn-primary');
+    this.btnEdit.set('btn btn-secondary');
+    const keys = STATUSES.map(s => s.key);
+    const next = keys[(keys.indexOf(room.status) + 1) % keys.length];
+    this.buildings.update(list =>
+      list.map((b, i) =>
+        i !== buildingIndex ? b : {
+          ...b,
+          rooms: b.rooms.map(r => (r === room ? { ...r, status: next } : r)),
+        }
+      )
+    );
+  }
+
+  onPopupSave(newProperty: NewProperty) {
+    if (newProperty.editIndex !== undefined) {
+      // Editing an existing building: replace it in place.
+      this.buildings.update(current =>
+        current.map((b, idx) =>
+          idx !== newProperty.editIndex ? b : {
+            name: newProperty.name,
+            rooms: newProperty.rooms.map(r => ({
+              no: r.room,
+              status: r.status as Status,
+            })),
+          }
+        )
+      );
+    } else {
+      // Adding a brand new building.
+      this.buildings.update(current => [
+        ...current,
+        {
+          name: newProperty.name,
+          rooms: newProperty.rooms.map(r => ({ no: r.room, status: r.status as Status })),
+        },
+      ]);
+    }
+    this.btn.set('btn btn-primary');
+    this.btnEdit.set('btn btn-secondary');
+  }
+
+  sendData() {
+    const data = { name: this.buildings() };
+    this.propertyService.postProduct(data).subscribe({
+      next: () => {
+        this.showMessage('Saved!', 'success');
+        this.btn.set('btn btn-secondary');
+        this.btnEdit.set('btn btn-primary');
+      },
+      error: () => this.showMessage('Failed to save. Try again.', 'error'),
+    });
+  }
+
+  private showMessage(msg: string, status: 'success' | 'error') {
+    this.saveMessage.set(msg);
+    this.saveStatus.set(status);
+    setTimeout(() => {
+      this.saveMessage.set('');
+      this.saveStatus.set('');
+    }, 2500);
+  }
+
+  // Opens the popup pre-filled with the currently selected building, for editing.
+  sendDataToPopup() {
+    const i = this.selected();
+    if (i < 0) {
+      this.showMessage('Select a building first', 'error');
+      return;
+    }
+    const building = this.buildings()[i];
+    this.popupRef()?.openForEdit(i, building);
+  }
+  // Deletes the currently selected building.
+  deleteBuilding() {
+    const i = this.selected();
+    if (i < 0) {
+      this.showMessage('Select a building first', 'error');
+      return;
+    }
+
+    const name = this.buildings()[i].name;
+    const confirmed = confirm(`Delete "${name}"? This can't be undone.`);
+    if (!confirmed) return;
+
+    this.buildings.update(current => current.filter((_, idx) => idx !== i));
+    this.selected.set(-1); // reset selection since that index no longer exists
+    this.showMessage('Deleted', 'success');
+    this.btn.set('');
+    this.btn.set('btn btn-primary');
+    this.btnEdit.set('btn btn-secondary');
+  }
+}
