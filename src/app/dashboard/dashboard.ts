@@ -206,8 +206,6 @@ export class Dashboard {
   // Start the long-press timer on mousedown/touchstart.
   startPress(buildingIndex: number, roomIndex: number, room: Room) {
     this.longPressFired = false;
-    this.btn.set('btn btn-secondary');
-    this.btnEdit.set('btn btn-primary');
     this.longPressTimer = setTimeout(() => {
       this.longPressFired = true;
       this.openNote(buildingIndex, roomIndex, room);
@@ -246,6 +244,8 @@ export class Dashboard {
         }
       )
     );
+    this.btn.set('btn btn-primary');
+    this.btnEdit.set('btn btn-secondary');
     this.editingNoteKey.set(null);
   }
 
