@@ -20,12 +20,9 @@ const apiResponse = [
     name: [
       {
         id: 1,
-        name: 'Manjeri',
+        name: 'eg....',
         rooms: [
           { id: 2, no: 16, remark:'remark',note:'note...', status: 'vacant' },
-          { id: 3, no: 17, remark:'remark',note:'note...',status: 'occupied' },
-          { id: 2, no: 16, remark:'remark',note:'note...',status: 'reserved' },
-          { id: 3, no: 17, remark:'remark',note:'note...',status: 'maintenance' },
         ],
       },
     ],
