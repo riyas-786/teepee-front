@@ -1,9 +1,9 @@
-import { Component, computed, signal, viewChild } from '@angular/core';
+import { Component, computed, signal, viewChild,HostBinding } from '@angular/core';
 import { TeePeeServices } from '../services/tee-pee-services';
 import { NewProperty, Popup } from '../popup/popup';
 
 type Status = 'vacant' | 'occupied' | 'reserved' | 'maintenance';
-interface Room { no: number; status: Status;remark:string }
+interface Room { no: number; status: Status;note:string,remark:string }
 interface Building { name: string; rooms: Room[]; }
 type Counts = Record<Status, number>;
 
@@ -22,10 +22,10 @@ const apiResponse = [
         id: 1,
         name: 'Manjeri',
         rooms: [
-          { id: 2, no: 16, remark:'remark',status: 'vacant' },
-          { id: 3, no: 17, remark:'remark',status: 'occupied' },
-          { id: 2, no: 16, remark:'remark',status: 'reserved' },
-          { id: 3, no: 17, remark:'remark',status: 'maintenance' },
+          { id: 2, no: 16, remark:'remark',note:'note...', status: 'vacant' },
+          { id: 3, no: 17, remark:'remark',note:'note...',status: 'occupied' },
+          { id: 2, no: 16, remark:'remark',note:'note...',status: 'reserved' },
+          { id: 3, no: 17, remark:'remark',note:'note...',status: 'maintenance' },
         ],
       },
     ],
@@ -35,7 +35,7 @@ const apiResponse = [
 function sampleData(): Building[] {
   return apiResponse[0].name.map(place => ({
     name: place.name,
-    rooms: place.rooms.map(r => ({ no: r.no, remark: r.remark,status:r.status as Status })),
+    rooms: place.rooms.map(r => ({ no: r.no, remark: r.remark,note:r.note,status:r.status as Status })),
   }));
 }
 
@@ -65,7 +65,16 @@ export class Dashboard {
   saveStatus = signal<'success' | 'error' | ''>('');
   buildings = signal<Building[]>(sampleData());
   selected = signal(-1); // -1 = all buildings
+darkMode = signal(false);
 
+  @HostBinding('class.dark')
+  get isDark() {
+    return this.darkMode();
+  }
+
+  toggleDark() {
+    this.darkMode.update(v => !v);
+  }
   private countOf(rooms: Room[]): Counts {
     const c: Counts = { vacant: 0, occupied: 0, reserved: 0, maintenance: 0 };
     rooms.forEach(r => c[r.status]++);
@@ -85,6 +94,7 @@ export class Dashboard {
   label(s: Status): string {
     return STATUSES.find(x => x.key === s)!.label;
   }
+ 
 
   // Click a room to cycle its status.
   cycle(buildingIndex: number, room: Room) {
@@ -113,6 +123,7 @@ export class Dashboard {
             name: newProperty.name,
             rooms: newProperty.rooms.map(r => ({
               no: r.room,
+              note:r.note,
               remark:r.remark,
               status: r.status as Status,
             })),
@@ -125,7 +136,7 @@ export class Dashboard {
         ...current,
         {
           name: newProperty.name,
-          rooms: newProperty.rooms.map(r => ({ no: r.room, remark:r.remark,status: r.status as Status })),
+          rooms: newProperty.rooms.map(r => ({ no: r.room, remark:r.remark,note:r.note,status: r.status as Status })),
         },
       ]);
     }
@@ -182,5 +193,65 @@ export class Dashboard {
     this.btn.set('');
     this.btn.set('btn btn-primary');
     this.btnEdit.set('btn btn-secondary');
+  }
+  // Tracks which room's note popover is open, e.g. "0-2" = building 0, room 2.
+  editingNoteKey = signal<string | null>(null);
+  noteDraft = signal('');
+
+  private longPressTimer: ReturnType<typeof setTimeout> | null = null;
+  private longPressFired = false;
+  private readonly LONG_PRESS_MS = 500;
+
+  noteKey(buildingIndex: number, roomIndex: number): string {
+    return `${buildingIndex}-${roomIndex}`;
+  }
+
+  // Start the long-press timer on mousedown/touchstart.
+  startPress(buildingIndex: number, roomIndex: number, room: Room) {
+    this.longPressFired = false;
+    this.longPressTimer = setTimeout(() => {
+      this.longPressFired = true;
+      this.openNote(buildingIndex, roomIndex, room);
+    }, this.LONG_PRESS_MS);
+  }
+
+  // Cancel the timer if released early (mouseup/touchend/leave).
+  cancelPress() {
+    if (this.longPressTimer) {
+      clearTimeout(this.longPressTimer);
+      this.longPressTimer = null;
+    }
+  }
+
+  // A short tap should cycle the status, but only if a long-press didn't already fire.
+  handleRoomClick(buildingIndex: number, room: Room) {
+    if (this.longPressFired) {
+      this.longPressFired = false; // swallow the click that follows a long-press release
+      return;
+    }
+    this.cycle(buildingIndex, room);
+  }
+
+  openNote(buildingIndex: number, roomIndex: number, room: Room) {
+    this.editingNoteKey.set(this.noteKey(buildingIndex, roomIndex));
+    this.noteDraft.set(room.note ?? '');
+  }
+
+  saveNote(buildingIndex: number, roomIndex: number) {
+    const value = this.noteDraft();
+    this.buildings.update(list =>
+      list.map((b, bi) =>
+        bi !== buildingIndex ? b : {
+          ...b,
+          rooms: b.rooms.map((r, ri) => (ri !== roomIndex ? r : { ...r, note: value })),
+        }
+      )
+    );
+    this.editingNoteKey.set(null);
+  }
+
+  cancelNote(event: Event) {
+    event.stopPropagation();
+    this.editingNoteKey.set(null);
   }
 }

@@ -1,10 +1,10 @@
 import { Component, ElementRef, EventEmitter, Output, signal, viewChild } from '@angular/core';
 
-interface RoomDraft { room: string; remark: string; status: string; }
+interface RoomDraft { room: string; remark: string; note:string, status: string; }
 
 export interface NewProperty {
   name: string;
-  rooms: { id: number; room: number; remark: string; status: string }[];
+  rooms: { id: number; room: number; remark: string; note:string, status: string }[];
   editIndex?: number; // set only when this save is editing an existing building
 }
 
@@ -37,11 +37,11 @@ export class Popup {
 
   // Opens the popup pre-filled with an existing building's data, for editing.
   // Call from Dashboard as: this.popupRef()?.openForEdit(index, building)
-  openForEdit(index: number, building: { name: string; rooms: { no: number; status: string }[] }) {
+  openForEdit(index: number, building: { name: string;  rooms: { no: number; remark:string ; note:string, status: string }[] }) {
     this.editIndex = index;
     this.propertyName.set(building.name);
     this.rooms.set(
-      building.rooms.map(r => ({ room: String(r.no), remark: '', status: r.status || 'vacant' }))
+      building.rooms.map(r => ({ room: String(r.no), remark: r.remark, note:r.note, status: r.status || 'vacant' }))
     );
     this.errorMessage.set('');
     this.dialogRef()?.nativeElement.showModal();
@@ -62,7 +62,7 @@ export class Popup {
       this.rooms.set([]);
       return;
     }
-    this.rooms.set(Array.from({ length: n }, () => ({ room: '', remark: '', status: 'vacant' })));
+    this.rooms.set(Array.from({ length: n }, () => ({ room: '', remark: '', note:'', status: 'vacant' })));
     this.errorMessage.set('');
   }
 
@@ -94,6 +94,7 @@ export class Popup {
         id: i + 1,
         room: Number(r.room) || 0,
         remark: r.remark,
+        note:r.note,
         status: r.status || 'vacant',
       })),
       editIndex: this.editIndex ?? undefined,

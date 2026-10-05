@@ -2,15 +2,23 @@
   <h1>TEE PEE</h1>
   <div class="actions">
     <app-popup (save)="onPopupSave($event)"></app-popup>
+    @if(btn()=='btn btn-primary'){
     <button [class]="btn()" (click)="sendData()">Save</button>
+    }@else{
     <button [class]="btnEdit()" (click)="sendDataToPopup()">Edit</button>
+    }
+
+
     <button class="btn btn-danger" (click)="deleteBuilding()">Delete</button>
+    <!-- <button class="theme-toggle" (click)="toggleDark()">
+      {{ darkMode() ? '☀️ Light' : '🌙 Dark' }}
+    </button> -->
     @if (saveMessage()) {
     <div class="toast" [class.success]="saveStatus() === 'success'" [class.error]="saveStatus() === 'error'">
       {{ saveMessage() }}
     </div>
     }
-  </div><hr>
+  </div>
 
   <!-- Building selector -->
   <div class="bsel" role="group" aria-label="Select building">
@@ -41,13 +49,31 @@
       </div>
 
       <div class="rooms">
-        @for (room of item.building.rooms; track $index) {
-        <button class="room" [class]="'room s-' + room.status"
-          [attr.aria-label]="'Room ' + room.no + ', ' + label(room.status)" (click)="cycle(item.index, room)">
-          <b>{{ room.no }}</b>
-          <span>{{ label(room.status) }}</span><br>
-          <span>{{room.remark}}</span>
-        </button>
+        @for (room of item.building.rooms; track $index; let ri = $index) {
+        <div class="room-wrap">
+          <button class="room" [class]="'room s-' + room.status"
+            [attr.aria-label]="'Room ' + room.no + ', ' + label(room.status)"
+            (click)="handleRoomClick(item.index, room)" (mousedown)="startPress(item.index, ri, room)"
+            (mouseup)="cancelPress()" (mouseleave)="cancelPress()" (touchstart)="startPress(item.index, ri, room)"
+            (touchend)="cancelPress()" (touchcancel)="cancelPress()" (contextmenu)="$event.preventDefault()">
+            <b>{{ room.no }}</b>
+            <span>{{ label(room.status) }}</span>
+            @if (room.remark) {
+            <span class="room-remark">{{ room.remark }}</span>
+            }
+          </button>
+
+          @if (editingNoteKey() === noteKey(item.index, ri)) {
+          <div class="note-popover" (click)="$event.stopPropagation()">
+            <textarea [value]="noteDraft()" (input)="noteDraft.set($any($event.target).value)"
+              placeholder="Add a note..." rows="2"></textarea>
+            <div class="note-actions">
+              <button class="note-btn cancel" (click)="cancelNote($event)">-</button>
+              <button class="note-btn save" (click)="saveNote(item.index, ri)">+</button>
+            </div>
+          </div>
+          }
+        </div>
         }
       </div>
     </section>
