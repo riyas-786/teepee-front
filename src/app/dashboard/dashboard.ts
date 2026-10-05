@@ -1,9 +1,9 @@
-import { Component, computed, signal, viewChild,HostBinding } from '@angular/core';
+import { Component, computed, signal, viewChild, HostBinding } from '@angular/core';
 import { TeePeeServices } from '../services/tee-pee-services';
 import { NewProperty, Popup } from '../popup/popup';
 
 type Status = 'vacant' | 'occupied' | 'reserved' | 'maintenance';
-interface Room { no: number; status: Status;note:string,remark:string }
+interface Room { no: number; status: Status; note: string, remark: string }
 interface Building { name: string; rooms: Room[]; }
 type Counts = Record<Status, number>;
 
@@ -22,7 +22,7 @@ const apiResponse = [
         id: 1,
         name: 'eg....',
         rooms: [
-          { id: 2, no: 16, remark:'remark',note:'note...', status: 'vacant' },
+          { id: 2, no: 16, remark: 'remark', note: 'note...', status: 'vacant' },
         ],
       },
     ],
@@ -32,7 +32,7 @@ const apiResponse = [
 function sampleData(): Building[] {
   return apiResponse[0].name.map(place => ({
     name: place.name,
-    rooms: place.rooms.map(r => ({ no: r.no, remark: r.remark,note:r.note,status:r.status as Status })),
+    rooms: place.rooms.map(r => ({ no: r.no, remark: r.remark, note: r.note, status: r.status as Status })),
   }));
 }
 
@@ -62,7 +62,7 @@ export class Dashboard {
   saveStatus = signal<'success' | 'error' | ''>('');
   buildings = signal<Building[]>(sampleData());
   selected = signal(-1); // -1 = all buildings
-darkMode = signal(false);
+  darkMode = signal(false);
 
   @HostBinding('class.dark')
   get isDark() {
@@ -91,7 +91,7 @@ darkMode = signal(false);
   label(s: Status): string {
     return STATUSES.find(x => x.key === s)!.label;
   }
- 
+
 
   // Click a room to cycle its status.
   cycle(buildingIndex: number, room: Room) {
@@ -111,7 +111,7 @@ darkMode = signal(false);
 
   onPopupSave(newProperty: NewProperty) {
     console.log(newProperty);
-    
+
     if (newProperty.editIndex !== undefined) {
       // Editing an existing building: replace it in place.
       this.buildings.update(current =>
@@ -120,8 +120,8 @@ darkMode = signal(false);
             name: newProperty.name,
             rooms: newProperty.rooms.map(r => ({
               no: r.room,
-              note:r.note,
-              remark:r.remark,
+              note: r.note,
+              remark: r.remark,
               status: r.status as Status,
             })),
           }
@@ -133,7 +133,7 @@ darkMode = signal(false);
         ...current,
         {
           name: newProperty.name,
-          rooms: newProperty.rooms.map(r => ({ no: r.room, remark:r.remark,note:r.note,status: r.status as Status })),
+          rooms: newProperty.rooms.map(r => ({ no: r.room, remark: r.remark, note: r.note, status: r.status as Status })),
         },
       ]);
     }
@@ -206,6 +206,8 @@ darkMode = signal(false);
   // Start the long-press timer on mousedown/touchstart.
   startPress(buildingIndex: number, roomIndex: number, room: Room) {
     this.longPressFired = false;
+    this.btn.set('btn btn-secondary');
+    this.btnEdit.set('btn btn-primary');
     this.longPressTimer = setTimeout(() => {
       this.longPressFired = true;
       this.openNote(buildingIndex, roomIndex, room);
