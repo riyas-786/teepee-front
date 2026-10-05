@@ -81,8 +81,7 @@ export class Dashboard {
   visibleBuildings = computed(() =>
     this.buildings()
       .map((building, index) => ({ building, index, counts: this.countOf(building.rooms) }))
-      .filter(({ index }) => this.selected() < 0 || index === this.selected())
-  );
+      .filter(({ index }) => this.selected() < 0 || index === this.selected()));
 
   pct(count: number, total: number): number {
     return total ? (count / total) * 100 : 0;
@@ -142,12 +141,15 @@ export class Dashboard {
   }
 
   sendData() {
+    console.log(this.buildings());
+
     const data = { name: this.buildings() };
     this.propertyService.postProduct(data).subscribe({
       next: () => {
         this.showMessage('Saved!', 'success');
         this.btn.set('btn btn-secondary');
         this.btnEdit.set('btn btn-primary');
+        this.toggleDark()
       },
       error: () => this.showMessage('Failed to save. Try again.', 'error'),
     });
@@ -163,8 +165,9 @@ export class Dashboard {
   }
 
   // Opens the popup pre-filled with the currently selected building, for editing.
-  sendDataToPopup() {
-    const i = this.selected();
+  sendDataToPopup(i: number) {
+
+    // const i = this.selected();
     if (i < 0) {
       this.showMessage('Select a building first', 'error');
       return;
@@ -225,8 +228,9 @@ export class Dashboard {
     if (this.longPressFired) {
       this.longPressFired = false; // swallow the click that follows a long-press release
       return;
+    } else if (this.btn() == 'btn btn-primary') {
+      this.cycle(buildingIndex, room);
     }
-    this.cycle(buildingIndex, room);
   }
 
   openNote(buildingIndex: number, roomIndex: number, room: Room) {
@@ -235,6 +239,7 @@ export class Dashboard {
   }
 
   saveNote(buildingIndex: number, roomIndex: number) {
+    if(this.btn()=="btn btn-primary"){
     const value = this.noteDraft();
     this.buildings.update(list =>
       list.map((b, bi) =>
@@ -247,10 +252,16 @@ export class Dashboard {
     this.btn.set('btn btn-primary');
     this.btnEdit.set('btn btn-secondary');
     this.editingNoteKey.set(null);
+    }
   }
 
   cancelNote(event: Event) {
     event.stopPropagation();
     this.editingNoteKey.set(null);
+  }
+  editbuttonToggle() {
+    this.btn.set('btn btn-primary');
+    this.btnEdit.set('btn btn-secondary');
+    this.toggleDark()
   }
 }
