@@ -82,7 +82,7 @@
               placeholder="Add a note..." rows="2"></textarea>
             <div class="note-actions">
               <button class="note-btn cancel" (click)="cancelNote($event)">cancel</button>
-              <button class="note-btn save" (click)="saveNote(item.index, ri)">OK</button>
+              @if(btn()=='btn btn-primary'){<button class="note-btn save" (click)="saveNote(item.index, ri)">OK</button>}
             </div>
           </div>
           }

@@ -20,9 +20,20 @@ const apiResponse = [
     name: [
       {
         id: 1,
-        name: 'eg....',
+        name: '',
         rooms: [
-          { id: 2, no: 16, remark: 'remark', note: 'note...', status: 'vacant' },
+          { id: 1, no: 0, remark: 'remark', note: 'note...', status: 'vacant' },
+          { id: 2, no: 0, remark: 'remark', note: 'note...', status: 'vacant' },
+          { id: 3, no: 0, remark: 'remark', note: 'note...', status: 'vacant' },
+          { id: 4, no: 0, remark: 'remark', note: 'note...', status: 'vacant' },
+          { id: 5, no: 0, remark: 'remark', note: 'note...', status: 'vacant' },
+          { id: 6, no: 0, remark: 'remark', note: 'note...', status: 'vacant' },
+          { id: 7, no: 0, remark: 'remark', note: 'note...', status: 'vacant' },
+          { id: 8, no: 0, remark: 'remark', note: 'note...', status: 'vacant' },
+          { id: 9, no: 0, remark: 'remark', note: 'note...', status: 'vacant' },
+          { id: 10, no: 0, remark: 'remark', note: 'note...', status: 'vacant' },
+          { id: 11, no: 0, remark: 'remark', note: 'note...', status: 'vacant' },
+          { id: 12, no: 0, remark: 'remark', note: 'note...', status: 'vacant' },
         ],
       },
     ],
@@ -177,22 +188,27 @@ export class Dashboard {
   }
   // Deletes the currently selected building.
   deleteBuilding() {
-    const i = this.selected();
-    if (i < 0) {
-      this.showMessage('Select a building first', 'error');
-      return;
-    }
+    this.propertyService.getProduct().subscribe((data) => {
+      this.buildings.set(data[0].name);
+      const i = this.selected();
+      if (i < 0) {
+        this.showMessage('Select a building first', 'error');
+        return;
+      }
 
-    const name = this.buildings()[i].name;
-    const confirmed = confirm(`Delete "${name}"? This can't be undone.`);
-    if (!confirmed) return;
+      const name = this.buildings()[i].name;
+      const confirmed = confirm(`Delete "${name}"? This can't be undone.`);
+      if (!confirmed) return;
 
-    this.buildings.update(current => current.filter((_, idx) => idx !== i));
-    this.selected.set(-1); // reset selection since that index no longer exists
-    this.showMessage('Deleted', 'success');
-    this.btn.set('');
-    this.btn.set('btn btn-primary');
-    this.btnEdit.set('btn btn-secondary');
+      this.buildings.update(current => current.filter((_, idx) => idx !== i));
+      this.selected.set(-1); // reset selection since that index no longer exists
+      this.showMessage('Deleted', 'success');
+      this.btn.set('btn btn-primary');
+      this.btnEdit.set('btn btn-secondary');
+      this.toggleDark();
+
+    });
+
   }
   // Tracks which room's note popover is open, e.g. "0-2" = building 0, room 2.
   editingNoteKey = signal<string | null>(null);
@@ -239,19 +255,19 @@ export class Dashboard {
   }
 
   saveNote(buildingIndex: number, roomIndex: number) {
-    if(this.btn()=="btn btn-primary"){
-    const value = this.noteDraft();
-    this.buildings.update(list =>
-      list.map((b, bi) =>
-        bi !== buildingIndex ? b : {
-          ...b,
-          rooms: b.rooms.map((r, ri) => (ri !== roomIndex ? r : { ...r, note: value })),
-        }
-      )
-    );
-    this.btn.set('btn btn-primary');
-    this.btnEdit.set('btn btn-secondary');
-    this.editingNoteKey.set(null);
+    if (this.btn() == "btn btn-primary") {
+      const value = this.noteDraft();
+      this.buildings.update(list =>
+        list.map((b, bi) =>
+          bi !== buildingIndex ? b : {
+            ...b,
+            rooms: b.rooms.map((r, ri) => (ri !== roomIndex ? r : { ...r, note: value })),
+          }
+        )
+      );
+      this.btn.set('btn btn-primary');
+      this.btnEdit.set('btn btn-secondary');
+      this.editingNoteKey.set(null);
     }
   }
 
@@ -260,8 +276,13 @@ export class Dashboard {
     this.editingNoteKey.set(null);
   }
   editbuttonToggle() {
-    this.btn.set('btn btn-primary');
-    this.btnEdit.set('btn btn-secondary');
-    this.toggleDark()
+    this.propertyService.getProduct().subscribe((data) => {
+      this.buildings.set(data[0].name);
+      this.btn.set('btn btn-primary');
+      this.btnEdit.set('btn btn-secondary');
+      this.toggleDark()
+      console.log(data[0].name);
+    });
+
   }
 }
