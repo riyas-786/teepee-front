@@ -14,7 +14,7 @@
   <div class="field">
     <label>Number of rooms</label>
     <input #box type="number" min="1" placeholder="Type a number and press Enter"
-           (keyup.enter)="makeRooms(box.value)">
+           (input)="makeRooms(box.value)">
     @if (errorMessage()) {
       <small class="error-text">{{ errorMessage() }}</small>
     }
