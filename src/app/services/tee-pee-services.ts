@@ -18,10 +18,10 @@ export interface Property {
 
 export class TeePeeServices {
 
-  apiUrl = "https://teepee-back.vercel.app/api/teepee"
-  apiUrlPost = "https://teepee-back.vercel.app/api/teepee/6ac215c6114fcefb434208fa"
-  // apiUrl = "http://localhost:3000/api/teePee"
-  // apiUrlPost = "http://localhost:3000/api/teePee/6ac215c6114fcefb434208fa"
+  apiUrl = "https://teepee-back.vercel.app/blueBells"
+  apiUrlPost = "https://teepee-back.vercel.app/blueBells/6ac215c6114fcefb434208fa"
+  // apiUrl = "http://localhost:3000/blueBells"
+  // apiUrlPost = "http://localhost:3000/blueBells/6ac215c6114fcefb434208fa"
   
 
 
